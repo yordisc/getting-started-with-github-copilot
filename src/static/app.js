@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Function to fetch activities from API
   async function fetchActivities() {
     try {
-      const response = await fetch("/activities");
+      const response = await fetch("/activities", { cache: "no-store" });
       const activities = await response.json();
 
       // Clear loading message and reset select to avoid duplicates
@@ -38,13 +38,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spotsLeft = details.max_participants - details.participants.length;
 
-        // Build participants section (bulleted list with avatars)
+        // Build participants section (list without bullets, avatars and delete buttons)
         let participantsHtml = "";
         if (details.participants && details.participants.length > 0) {
           participantsHtml =
             `<div class="participants" aria-live="polite"><h5>Participants</h5><ul>` +
             details.participants
-              .map((p) => `<li><span class="avatar">${getInitial(p)}</span>${escapeHtml(p)}</li>`)
+              .map((p) => `<li data-activity="${escapeHtml(name)}" data-email="${escapeHtml(p)}"><span class="avatar">${getInitial(p)}</span>${escapeHtml(p)}<button class="delete-btn" aria-label="Unregister ${escapeHtml(p)}">✖</button></li>`)
               .join("") +
             `</ul></div>`;
         } else {
@@ -118,4 +118,43 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize app
   fetchActivities();
+
+  // Handle participant delete clicks (event delegation)
+  activitiesList.addEventListener("click", async (e) => {
+    if (e.target && e.target.matches(".delete-btn")) {
+      const li = e.target.closest("li");
+      if (!li) return;
+      const activity = li.dataset.activity;
+      const email = li.dataset.email;
+
+      try {
+        const resp = await fetch(`/activities/${encodeURIComponent(activity)}/signup?email=${encodeURIComponent(email)}`, {
+          method: "DELETE",
+        });
+        const resJson = await resp.json();
+
+        if (resp.ok) {
+          messageDiv.textContent = resJson.message;
+          messageDiv.className = "success";
+          messageDiv.classList.remove("hidden");
+          // Refresh activities list to reflect change
+          await fetchActivities();
+        } else {
+          messageDiv.textContent = resJson.detail || "An error occurred";
+          messageDiv.className = "error";
+          messageDiv.classList.remove("hidden");
+        }
+      } catch (error) {
+        messageDiv.textContent = "Failed to unregister. Please try again.";
+        messageDiv.className = "error";
+        messageDiv.classList.remove("hidden");
+        console.error("Error unregistering:", error);
+      }
+
+      // Hide message after 5 seconds
+      setTimeout(() => {
+        messageDiv.classList.add("hidden");
+      }, 5000);
+    }
+  });
 });

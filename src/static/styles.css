@@ -159,14 +159,15 @@ footer {
 }
 
 .participants ul {
-  list-style: disc inside;
-  margin-left: 6px;
+  list-style: none;
+  margin-left: 0;
   padding-left: 0;
 }
 
 .participants li {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   padding: 4px 0;
   color: #444;
@@ -185,6 +186,20 @@ footer {
   font-weight: 700;
   font-size: 12px;
   flex: 0 0 auto;
+}
+
+.participants .delete-btn {
+  margin-left: 12px;
+  background: transparent;
+  border: none;
+  color: #c62828;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+}
+
+.participants .delete-btn:hover {
+  color: #b71c1c;
 }
 
 .participants.empty {
